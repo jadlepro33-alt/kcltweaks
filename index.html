@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KCl — Optimisation PC pour gamers | Boost FPS Windows</title>
+  <meta name="description" content="KCl est un outil d'optimisation Windows pour gamers. 180+ tweaks vérifiés anti-cheat-safe pour booster vos FPS sur Valorant, CS2, Apex, Fortnite. Téléchargement gratuit.">
+  <meta name="keywords" content="optimisation pc gaming, boost fps windows, tweaks gaming, optimisation valorant, fps boost cs2, debloat windows 11">
+  <meta property="og:title" content="KCl — Optimisation PC pour gamers">
+  <meta property="og:description" content="180+ tweaks pour booster vos FPS sans risque de ban.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kcl-app.vercel.app">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 400: '#6b8aff', 500: '#3a5cf5', 600: '#2a47d4', 700: '#1f37b0' }
+          },
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { background: #0a0a0f; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+    .gradient-text { background: linear-gradient(135deg, #6b8aff, #a78bfa, #f472b6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+    .glow { box-shadow: 0 0 60px -10px rgba(58,92,245,0.4); }
+    .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0); background-size: 32px 32px; }
+  </style>
+</head>
+<body class="bg-grid">
+
+  <!-- NAV -->
+  <nav class="sticky top-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center font-bold">⚡</div>
+        <span class="text-lg font-bold gradient-text">KCl</span>
+      </a>
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <a href="#features" class="hover:text-white text-slate-400 transition">Fonctionnalités</a>
+        <a href="#pricing" class="hover:text-white text-slate-400 transition">Tarifs</a>
+        <a href="/blog/" class="hover:text-white text-slate-400 transition">Blog</a>
+        <a href="/about.html" class="hover:text-white text-slate-400 transition">À propos</a>
+        <a href="/contact.html" class="hover:text-white text-slate-400 transition">Contact</a>
+      </div>
+      <a href="#download" class="px-4 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-brand-500 to-purple-500 hover:from-brand-400 hover:to-purple-400 transition">Télécharger</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="relative pt-20 pb-32 px-6 overflow-hidden">
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-gradient-to-br from-brand-500/20 via-purple-500/10 to-transparent blur-3xl pointer-events-none"></div>
+    <div class="relative max-w-5xl mx-auto text-center">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-300 text-xs uppercase tracking-wider font-bold mb-6">
+        <span>⚡</span> Version 0.1 disponible
+      </div>
+      <h1 class="text-5xl md:text-7xl font-extrabold leading-tight mb-6">
+        Boost ton PC.<br>
+        <span class="gradient-text">Domine tes jeux.</span>
+      </h1>
+      <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10">
+        180+ optimisations Windows vérifiées pour gagner des FPS, réduire la latence et virer le bloat — sans risque de ban anti-cheat.
+      </p>
+      <div class="flex flex-wrap items-center justify-center gap-3 mb-12">
+        <a href="#download" class="px-7 py-3.5 rounded-xl text-base font-bold bg-gradient-to-r from-brand-500 to-purple-500 hover:from-brand-400 hover:to-purple-400 transition shadow-lg glow">
+          ⬇ Télécharger gratuit
+        </a>
+        <a href="#features" class="px-7 py-3.5 rounded-xl text-base font-semibold bg-white/5 hover:bg-white/10 border border-white/10 transition">
+          Voir les fonctionnalités
+        </a>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-slate-500">
+        <span class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 100% Vanguard-safe</span>
+        <span class="flex items-center gap-2"><span class="text-emerald-400">✓</span> 180+ tweaks</span>
+        <span class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Smart Mode IA</span>
+        <span class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Français · Québec</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="px-6 -mt-12 mb-20">
+    <div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass rounded-xl p-5 text-center">
+        <div class="text-3xl font-bold gradient-text mb-1">180+</div>
+        <div class="text-xs text-slate-400">Optimisations</div>
+      </div>
+      <div class="glass rounded-xl p-5 text-center">
+        <div class="text-3xl font-bold gradient-text mb-1">+15%</div>
+        <div class="text-xs text-slate-400">FPS moyens</div>
+      </div>
+      <div class="glass rounded-xl p-5 text-center">
+        <div class="text-3xl font-bold gradient-text mb-1">-10ms</div>
+        <div class="text-xs text-slate-400">Latence input</div>
+      </div>
+      <div class="glass rounded-xl p-5 text-center">
+        <div class="text-3xl font-bold gradient-text mb-1">12K+</div>
+        <div class="text-xs text-slate-400">Gamers</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="px-6 py-20">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <div class="text-xs uppercase tracking-wider text-brand-400 font-bold mb-3">Fonctionnalités</div>
+        <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Plus qu'un simple <span class="gradient-text">tweaker</span></h2>
+        <p class="text-slate-400 max-w-2xl mx-auto">KCl analyse ton hardware, détecte tes anti-cheats, propose ce qui marche pour TON setup.</p>
+      </div>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="glass rounded-2xl p-6 hover:border-brand-500/30 transition">
+          <div class="w-12 h-12 rounded-xl bg-brand-500/20 flex items-center justify-center mb-4 text-2xl">🧠</div>
+          <h3 class="text-lg font-bold mb-2">Smart Mode IA</h3>
+          <p class="text-sm text-slate-400">Scan automatique de ton CPU, GPU, RAM, disques et anti-cheats. KCl recommande uniquement ce qui s'applique à toi.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-brand-500/30 transition">
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-4 text-2xl">🛡️</div>
+          <h3 class="text-lg font-bold mb-2">Anti-cheat Safe</h3>
+          <p class="text-sm text-slate-400">Détection de Vanguard, EAC, BattlEye, FACEIT. Aucun tweak risqué proposé si jeu compétitif détecté.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-brand-500/30 transition">
+          <div class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mb-4 text-2xl">🎯</div>
+          <h3 class="text-lg font-bold mb-2">Profils par jeu</h3>
+          <p class="text-sm text-slate-400">Presets dédiés : Valorant, CS2, Apex, Fortnite, R6, LoL, OW2, Rocket League — appliqués via IFEO sans modifier les jeux.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-brand-500/30 transition">
+          <div class="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center mb-4 text-2xl">⚡</div>
+          <h3 class="text-lg font-bold mb-2">Smart Pack</h3>
+          <p class="text-sm text-slate-400">Applique en un clic toutes les optimisations recommandées pour ton PC. Confetti + progress bar pour l'ambiance.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-brand-500/30 transition">
+          <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-4 text-2xl">🔄</div>
+          <h3 class="text-lg font-bold mb-2">Point de restauration</h3>
+          <p class="text-sm text-slate-400">Création automatique d'un snapshot Windows avant tout changement. Rollback en 1 click si problème.</p>
+        </div>
+        <div class="glass rounded-2xl p-6 hover:border-brand-500/30 transition">
+          <div class="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center mb-4 text-2xl">📊</div>
+          <h3 class="text-lg font-bold mb-2">Avant/Après</h3>
+          <p class="text-sm text-slate-400">Chaque tweak affiche l'état système avant et après. Tu vois exactement ce qui change.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing" class="px-6 py-20">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <div class="text-xs uppercase tracking-wider text-brand-400 font-bold mb-3">Tarifs</div>
+        <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Le bon plan pour <span class="gradient-text">ton setup</span></h2>
+        <p class="text-slate-400">Commence gratuit. Upgrade quand tu veux. Annule à tout moment.</p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-5">
+        <div class="glass rounded-2xl p-7 flex flex-col">
+          <div class="text-3xl mb-2">🆓</div>
+          <h3 class="text-xl font-bold mb-1">Gratuit</h3>
+          <p class="text-xs text-slate-400 mb-4">Pour découvrir KCl</p>
+          <div class="text-3xl font-bold mb-1">0 $</div>
+          <div class="text-xs text-slate-500 mb-6">à vie</div>
+          <ul class="space-y-2 text-sm flex-1 mb-6">
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> 82 optimisations basiques</li>
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> Smart Mode IA</li>
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> Nettoyage temp + bloat</li>
+            <li class="flex gap-2"><span class="text-amber-400">!</span> Publicités intégrées</li>
+            <li class="flex gap-2 text-slate-600"><span>×</span> Tweaks réseau pro</li>
+            <li class="flex gap-2 text-slate-600"><span>×</span> Tweaks CPU/GPU extrêmes</li>
+          </ul>
+          <a href="#download" class="block text-center py-2.5 rounded-xl text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 transition">Télécharger gratuit</a>
+        </div>
+        <div class="glass rounded-2xl p-7 flex flex-col border-brand-500/40 relative md:scale-105 md:-mt-2">
+          <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-brand-500 to-purple-500">⭐ Le + populaire</div>
+          <div class="text-3xl mb-2">⭐</div>
+          <h3 class="text-xl font-bold mb-1">Premium</h3>
+          <p class="text-xs text-slate-400 mb-4">Pour les gamers sérieux</p>
+          <div class="text-3xl font-bold mb-1">9,99 $</div>
+          <div class="text-xs text-slate-500 mb-6">par mois</div>
+          <ul class="space-y-2 text-sm flex-1 mb-6">
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> Tout du forfait Gratuit</li>
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> 156 optimisations</li>
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> <strong>Aucune publicité</strong></li>
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> Tweaks réseau pro</li>
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> Scan 2× plus rapide</li>
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> Personnalisation avancée</li>
+          </ul>
+          <a href="#download" class="block text-center py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-brand-500 to-purple-500 hover:from-brand-400 hover:to-purple-400 transition">Passer Premium</a>
+        </div>
+        <div class="glass rounded-2xl p-7 flex flex-col border-purple-500/30">
+          <div class="text-3xl mb-2">👑</div>
+          <h3 class="text-xl font-bold mb-1">Pro</h3>
+          <p class="text-xs text-slate-400 mb-4">Performance maximale</p>
+          <div class="text-3xl font-bold mb-1">19,99 $</div>
+          <div class="text-xs text-slate-500 mb-6">par mois</div>
+          <ul class="space-y-2 text-sm flex-1 mb-6">
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> Tout du forfait Premium</li>
+            <li class="flex gap-2"><span class="text-emerald-400">✓</span> <strong>180 optimisations</strong></li>
+            <li class="flex gap-2"><span class="text-purple-400">✓</span> Tweaks extrêmes (VBS, HVCI, IRQ)</li>
+            <li class="flex gap-2"><span class="text-purple-400">✓</span> Profils par jeu auto</li>
+            <li class="flex gap-2"><span class="text-purple-400">✓</span> IA contextuelle Pro</li>
+            <li class="flex gap-2"><span class="text-purple-400">✓</span> Support prioritaire 24/7</li>
+          </ul>
+          <a href="#download" class="block text-center py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-purple-500 via-fuchsia-500 to-brand-500 hover:opacity-90 transition">Passer Pro</a>
+        </div>
+      </div>
+      <p class="text-center text-xs text-slate-500 mt-8">Garantie 14 jours satisfait ou remboursé · Paiement sécurisé Stripe · Sans engagement</p>
+    </div>
+  </section>
+
+  <!-- DOWNLOAD CTA -->
+  <section id="download" class="px-6 py-20">
+    <div class="max-w-3xl mx-auto text-center glass rounded-3xl p-12 relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-purple-500/5 to-transparent pointer-events-none"></div>
+      <div class="relative">
+        <div class="text-5xl mb-4">⚡</div>
+        <h2 class="text-4xl font-extrabold mb-3">Prêt à booster ton PC ?</h2>
+        <p class="text-slate-400 mb-8">Téléchargement gratuit · Windows 10/11 · 64-bit · 35 Mo</p>
+        <a href="#" class="inline-block px-8 py-4 rounded-xl text-lg font-bold bg-gradient-to-r from-brand-500 to-purple-500 hover:from-brand-400 hover:to-purple-400 transition shadow-2xl glow">
+          ⬇ Télécharger KCl pour Windows
+        </a>
+        <p class="text-xs text-slate-500 mt-4">v0.1.0 · MAJ il y a 2 jours · Build à venir</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-white/5 px-6 py-12">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-4 gap-8">
+      <div>
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center font-bold">⚡</div>
+          <span class="text-lg font-bold gradient-text">KCl</span>
+        </div>
+        <p class="text-xs text-slate-500">Optimisation PC pour gamers francophones. Fait au Québec.</p>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold mb-3">Produit</h4>
+        <ul class="space-y-2 text-xs text-slate-400">
+          <li><a href="#features" class="hover:text-white">Fonctionnalités</a></li>
+          <li><a href="#pricing" class="hover:text-white">Tarifs</a></li>
+          <li><a href="#download" class="hover:text-white">Télécharger</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold mb-3">Ressources</h4>
+        <ul class="space-y-2 text-xs text-slate-400">
+          <li><a href="/blog/" class="hover:text-white">Blog</a></li>
+          <li><a href="/about.html" class="hover:text-white">À propos</a></li>
+          <li><a href="/contact.html" class="hover:text-white">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold mb-3">Légal</h4>
+        <ul class="space-y-2 text-xs text-slate-400">
+          <li><a href="/privacy.html" class="hover:text-white">Politique de confidentialité</a></li>
+          <li><a href="/terms.html" class="hover:text-white">Conditions d'utilisation</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="max-w-6xl mx-auto pt-8 mt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+      <span>© 2026 KCl. Tous droits réservés.</span>
+      <span>Made with ⚡ in Montréal, Québec</span>
+    </div>
+  </footer>
+
+</body>
+</html>

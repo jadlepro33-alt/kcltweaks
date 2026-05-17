@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tweaks sûrs pour Vanguard, EAC et FACEIT — KCl</title>
+  <meta name="description" content="Quels tweaks Windows éviter avec Vanguard, EAC, BattlEye et FACEIT. Liste complète des optimisations 100% safe par anti-cheat.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{400:'#6b8aff',500:'#3a5cf5'}},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body{background:#0a0a0f;color:#e2e8f0;font-family:'Inter',sans-serif}.gradient-text{background:linear-gradient(135deg,#6b8aff,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.glass{background:rgba(255,255,255,0.03);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}article h2{font-size:1.5rem;font-weight:700;color:white;margin-top:2.5rem;margin-bottom:1rem}article h3{font-size:1.15rem;font-weight:600;color:white;margin-top:2rem;margin-bottom:0.75rem}article p{margin-bottom:1rem;line-height:1.7}article ul{margin-left:1.5rem;margin-bottom:1rem;list-style:disc}article li{margin-bottom:0.5rem}article code{background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:0.85em;color:#a78bfa}</style>
+</head>
+<body>
+  <nav class="sticky top-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center font-bold">⚡</div>
+        <span class="text-lg font-bold gradient-text">KCl</span>
+      </a>
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <a href="/blog/" class="text-white">← Blog</a>
+        <a href="/#download" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-brand-500 to-purple-500 font-semibold">Télécharger</a>
+      </div>
+    </div>
+  </nav>
+
+  <article class="max-w-3xl mx-auto px-6 py-16 text-slate-300">
+    <div class="text-[11px] uppercase tracking-wider text-brand-400 font-bold mb-3">Guide · 6 min · 14 mai 2026</div>
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">Tweaks sûrs pour Vanguard, EAC et FACEIT</h1>
+    <p class="text-lg text-slate-400 mb-8">Optimiser Windows pour le gaming, oui — mais sans se faire bannir. Voici quels tweaks éviter avec chaque anti-cheat majeur en 2026, et lesquels sont 100% safe.</p>
+
+    <h2>Les 4 anti-cheats majeurs et leur sensibilité</h2>
+
+    <h3>1. Riot Vanguard (Valorant, League of Legends)</h3>
+    <p>Vanguard est <strong>le plus strict</strong> du marché. Il tourne en kernel mode dès le boot Windows et surveille en permanence les modifications système. Il bloque même le lancement du jeu si certains drivers ou tweaks sont détectés.</p>
+    <p>Tweaks à <strong>éviter</strong> avec Vanguard actif :</p>
+    <ul>
+      <li>Désactivation VBS / HVCI (Vanguard exige souvent ces sécurités sur Windows 11)</li>
+      <li>Modification du Win32PrioritySeparation au-delà des valeurs standard</li>
+      <li>Désactivation de Defender (Vanguard ne se lance plus)</li>
+      <li>Outils de hooking GPU (RTSS overlay peut poser problème)</li>
+      <li>Modification IFEO sur valorant.exe (interdit, bypass jeu)</li>
+    </ul>
+
+    <h3>2. Easy Anti-Cheat (Fortnite, Apex Legends, R6, Dead by Daylight)</h3>
+    <p>EAC est moins agressif que Vanguard mais surveille les processus injectés et les modifications mémoire. Compatible avec la plupart des tweaks Windows standard.</p>
+    <p>Tweaks à <strong>éviter</strong> avec EAC :</p>
+    <ul>
+      <li>Injection DLL ou trainers (ban immédiat)</li>
+      <li>Cheat Engine ouvert pendant la partie</li>
+      <li>Process Hacker / Process Explorer en debug mode</li>
+      <li>Désactivation Defender complète (peut déclencher heuristique)</li>
+    </ul>
+
+    <h3>3. BattlEye (PUBG, ARMA, Rainbow Six)</h3>
+    <p>Approche similaire à EAC. Les tweaks système classiques (services, registre, power plan) sont tous safe. Évite uniquement les outils tiers qui modifient les processus jeu.</p>
+
+    <h3>4. FACEIT AC (CS2 sur FACEIT, Valorant tier 1)</h3>
+    <p>FACEIT est en mode kernel et <strong>très strict</strong> sur les tweaks de timing CPU et les modifications drivers. Il accepte la plupart des tweaks Windows standard mais refuse :</p>
+    <ul>
+      <li>Modifications timer resolution global (peut être détecté)</li>
+      <li>Désactivation HVCI sur Windows 11</li>
+      <li>Drivers non signés ou en test mode</li>
+      <li>Process priority manipulation via tools externes (ProcessLasso)</li>
+    </ul>
+
+    <h2>Les tweaks 100% safe avec TOUS les anti-cheats</h2>
+    <p>Ces optimisations ne touchent pas aux mécanismes anti-cheat et sont sûres partout :</p>
+    <ul>
+      <li><strong>Game Mode Windows</strong> : c'est Microsoft qui le fait, zéro risque</li>
+      <li><strong>Hardware-Accelerated GPU Scheduling (HAGS)</strong> : setting Microsoft officiel</li>
+      <li><strong>NVIDIA Reflex / AMD Anti-Lag</strong> : fournis par les fabricants GPU</li>
+      <li><strong>Désactivation Xbox Game Bar</strong> : pas lié au jeu</li>
+      <li><strong>Nettoyage fichiers temporaires</strong> : ne touche pas processus</li>
+      <li><strong>Plan d'alimentation Ultimate Performance</strong> : juste un setting Windows</li>
+      <li><strong>Désactivation Cortana / Phone Link / OneDrive autostart</strong> : services indépendants</li>
+      <li><strong>Désactivation IPv6 si VPN absent</strong> : pas lié au jeu</li>
+      <li><strong>Nettoyage shader caches</strong> : opération système classique</li>
+      <li><strong>Optimisation NIC réseau (autotuning, throttling)</strong> : niveau réseau OS</li>
+    </ul>
+
+    <h2>Comment KCl gère ça automatiquement</h2>
+    <p><a href="/" class="text-brand-400 hover:underline">KCl</a> détecte au démarrage quels anti-cheats sont installés ou actifs sur ton PC. Si Vanguard, EAC, BattlEye ou FACEIT sont présents :</p>
+    <ul>
+      <li>Les tweaks marqués <code>anticheatRisk: 'caution'</code> deviennent "Optionnels" au lieu de "Recommandés"</li>
+      <li>Les tweaks <code>anticheatRisk: 'risky'</code> deviennent "⚠ Déconseillés" avec explication détaillée</li>
+      <li>Smart Pack n'applique que les tweaks safe pour ton setup</li>
+      <li>Chaque tweak risqué affiche le nom de l'anti-cheat détecté et la nature exacte du risque</li>
+    </ul>
+
+    <h2>Règle d'or</h2>
+    <p>Si tu as un doute, applique uniquement les tweaks marqués "100% safe" dans la liste ci-dessus. Tu gagneras déjà 5 à 10% de FPS sans risquer ton compte. Les tweaks extrêmes (VBS, HVCI, timer resolution) ne valent le coup que si tu n'as pas de jeu compétitif installé, ou si tu acceptes le risque assumé.</p>
+
+    <p>Et surtout : <strong>teste toujours sur un compte secondaire</strong> avant de toucher ton compte principal Valorant Immortal ou ta carrière FACEIT 3000 ELO.</p>
+
+    <div class="glass rounded-2xl p-6 mt-12 text-center">
+      <h3 class="text-xl font-bold mb-2">KCl détecte tes anti-cheats automatiquement</h3>
+      <p class="text-sm text-slate-400 mb-4">Smart Mode IA recommande uniquement ce qui est safe pour ton setup</p>
+      <a href="/#download" class="inline-block px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-brand-500 to-purple-500">⬇ Télécharger gratuit</a>
+    </div>
+  </article>
+
+  <footer class="border-t border-white/5 px-6 py-8 mt-16 text-center text-xs text-slate-500">
+    <p>© 2026 KCl · Made with ⚡ in Montréal, Québec</p>
+  </footer>
+</body>
+</html>

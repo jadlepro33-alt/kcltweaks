@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CS2 : guide complet d'optimisation 2026 — KCl</title>
+  <meta name="description" content="Optimiser CS2 : launch options, video.txt, NVIDIA Reflex, MSI mode. Atteindre 300+ FPS sur CS2 en 2026.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{400:'#6b8aff',500:'#3a5cf5'}},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body{background:#0a0a0f;color:#e2e8f0;font-family:'Inter',sans-serif}.gradient-text{background:linear-gradient(135deg,#6b8aff,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.glass{background:rgba(255,255,255,0.03);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}article h2{font-size:1.5rem;font-weight:700;color:white;margin-top:2.5rem;margin-bottom:1rem}article h3{font-size:1.15rem;font-weight:600;color:white;margin-top:2rem;margin-bottom:0.75rem}article p{margin-bottom:1rem;line-height:1.7}article ul{margin-left:1.5rem;margin-bottom:1rem;list-style:disc}article li{margin-bottom:0.5rem}article code{background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:0.85em;color:#a78bfa}</style>
+</head>
+<body>
+  <nav class="sticky top-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center font-bold">⚡</div>
+        <span class="text-lg font-bold gradient-text">KCl</span>
+      </a>
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <a href="/blog/" class="text-white">← Blog</a>
+        <a href="/#download" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-brand-500 to-purple-500 font-semibold">Télécharger</a>
+      </div>
+    </div>
+  </nav>
+
+  <article class="max-w-3xl mx-auto px-6 py-16 text-slate-300">
+    <div class="text-[11px] uppercase tracking-wider text-brand-400 font-bold mb-3">Per-game · 7 min · 16 mai 2026</div>
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">CS2 : guide complet d'optimisation 2026</h1>
+    <p class="text-lg text-slate-400 mb-8">CS2 tourne sur Source 2, plus exigeant que CS:GO. Voici comment retrouver tes 300+ FPS sur CS2 sans baisser à 1024×768.</p>
+
+    <h2>Étape 1 : launch options Steam</h2>
+    <p>Clic droit sur CS2 dans Steam → Propriétés → Options de lancement :</p>
+    <pre style="background:rgba(0,0,0,0.4);padding:1rem;border-radius:8px;overflow-x:auto"><code>-novid -high -threads 8 -nojoy +fps_max 0 -tickrate 128</code></pre>
+    <p>Détail :</p>
+    <ul>
+      <li><code>-novid</code> : skip intro Valve</li>
+      <li><code>-high</code> : lance CS2 en priorité High (équivaut à IFEO Priority=High)</li>
+      <li><code>-threads 8</code> : utilise 8 threads CPU (ajuste selon ton CPU)</li>
+      <li><code>-nojoy</code> : désactive support manette (gain mémoire)</li>
+      <li><code>+fps_max 0</code> : pas de cap FPS</li>
+      <li><code>-tickrate 128</code> : pour offline / FACEIT (par défaut Valve = 64)</li>
+    </ul>
+
+    <h2>Étape 2 : settings vidéo CS2 in-game</h2>
+    <ul>
+      <li><strong>Mode d'affichage</strong> : Plein écran (jamais Borderless)</li>
+      <li><strong>Résolution</strong> : native ou stretched 1280×960 (préférence pro players)</li>
+      <li><strong>Boost performances</strong> : Activé</li>
+      <li><strong>Synchronisation verticale (VSync)</strong> : Désactivée</li>
+      <li><strong>Anti-crénelage</strong> : 2x MSAA (compromis acceptable)</li>
+      <li><strong>Filtrage anisotrope</strong> : 2x</li>
+      <li><strong>Détails du monde</strong> : Faible</li>
+      <li><strong>Détails des modèles</strong> : Faible</li>
+      <li><strong>Détails des textures</strong> : Faible</li>
+      <li><strong>Effets lumineux</strong> : Faible</li>
+      <li><strong>Détails de l'ombrage</strong> : Faible</li>
+      <li><strong>NVIDIA Reflex</strong> : Activé + Boost</li>
+    </ul>
+
+    <h2>Étape 3 : configurer video.txt manuellement</h2>
+    <p>Va dans <code>%steam%\steamapps\common\Counter-Strike Global Offensive\game\csgo\cfg\</code> et édite <code>video.txt</code> :</p>
+    <p>Force <code>"setting.cpu_level" "0"</code> et <code>"setting.gpu_level" "0"</code> pour low preset partout. Si tu veux du contrôle granulaire, modifie chaque <code>setting.x</code> individuellement.</p>
+
+    <h2>Étape 4 : NVIDIA Control Panel pour CS2</h2>
+    <p>Direction <code>Manage 3D Settings → Program Settings → cs2.exe</code> :</p>
+    <ul>
+      <li><strong>Low Latency Mode</strong> : Ultra</li>
+      <li><strong>Max Frame Rate</strong> : ton refresh rate + 5 (ex: 245 pour 240 Hz)</li>
+      <li><strong>Power Management Mode</strong> : Prefer Maximum Performance</li>
+      <li><strong>Threaded Optimization</strong> : Auto</li>
+      <li><strong>VSync</strong> : Off (ou Fast pour G-Sync)</li>
+      <li><strong>Triple Buffering</strong> : Off</li>
+      <li><strong>Preferred refresh rate</strong> : Highest available</li>
+      <li><strong>Shader Cache Size</strong> : 10 GB (ou Unlimited)</li>
+    </ul>
+
+    <h2>Étape 5 : Reflex et G-Sync</h2>
+    <p>Si tu as un écran G-Sync compatible + GPU NVIDIA :</p>
+    <ul>
+      <li>Active G-Sync dans NVIDIA Control Panel pour CS2.exe</li>
+      <li>Active NVIDIA Reflex Low Latency + Boost dans CS2</li>
+      <li>Cap FPS à <strong>refresh rate - 3</strong> (ex: 237 pour 240 Hz) pour rester dans la fenêtre G-Sync</li>
+    </ul>
+    <p>Cette combo donne le meilleur résultat input lag + tear-free.</p>
+
+    <h2>Étape 6 : tweaks Windows pour CS2</h2>
+    <p>CS2 utilise EAC (sur Premier MM) et VAC. Voici les tweaks <strong>safe</strong> :</p>
+    <ul>
+      <li>Game Mode + HAGS</li>
+      <li>System Responsiveness à 0</li>
+      <li>Plan Ultimate Performance</li>
+      <li>Désactivation Xbox Game Bar profonde</li>
+      <li>NVIDIA telemetry off</li>
+      <li>GPU MSI Mode activé</li>
+      <li>TDR Delay augmenté (anti-crash GPU)</li>
+    </ul>
+    <p>Si tu joues uniquement sur FACEIT :</p>
+    <ul>
+      <li>Évite désactivation HVCI (FACEIT AC peut bloquer)</li>
+      <li>Évite timer resolution global 0.5ms</li>
+    </ul>
+
+    <h2>Étape 7 : MSI mode pour ton GPU</h2>
+    <p>Le mode MSI (Message Signaled Interrupts) sur ta carte graphique réduit la latence de communication CPU↔GPU. Pour vérifier/activer :</p>
+    <pre style="background:rgba(0,0,0,0.4);padding:1rem;border-radius:8px;overflow-x:auto"><code>HKLM\SYSTEM\CurrentControlSet\Enum\PCI\[TON_GPU]\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties
+MSISupported = 1</code></pre>
+    <p>KCl le fait automatiquement avec le tweak "GPU MSI Mode".</p>
+
+    <h2>Étape 8 : Steam et background tasks</h2>
+    <ul>
+      <li>Ferme Discord overlay pour CS2 (option dans Discord)</li>
+      <li>Désactive Steam overlay pour CS2 (clic droit → Propriétés)</li>
+      <li>Évite d'avoir Chrome avec 20 onglets pendant le match</li>
+      <li>Désactive RGB software (iCUE, ASUS Armoury) — ces softs reservent du CPU</li>
+    </ul>
+
+    <h2>Benchmarks attendus</h2>
+    <p>Setup mid (RTX 3060 / Ryzen 5 5600X) :</p>
+    <ul>
+      <li><strong>Avant</strong> : 200-260 FPS en map cs_office</li>
+      <li><strong>Après</strong> : 320-400 FPS en map cs_office</li>
+    </ul>
+
+    <h2>KCl preset CS2</h2>
+    <p>Le preset "🔫 CS2" dans <a href="/" class="text-brand-400 hover:underline">KCl</a> applique automatiquement IFEO Priority High + Fullscreen Optimizations OFF + High DPI awareness sur cs2.exe — sans modifier ton install Steam, donc compatible Valve VAC et FACEIT AC.</p>
+
+    <div class="glass rounded-2xl p-6 mt-12 text-center">
+      <h3 class="text-xl font-bold mb-2">Preset CS2 dans KCl Pro</h3>
+      <p class="text-sm text-slate-400 mb-4">Automatise tout en 1 clic, anti-cheat aware</p>
+      <a href="/#pricing" class="inline-block px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-purple-500 to-fuchsia-500">👑 Voir Pro</a>
+    </div>
+  </article>
+
+  <footer class="border-t border-white/5 px-6 py-8 mt-16 text-center text-xs text-slate-500">
+    <p>© 2026 KCl · Made with ⚡ in Montréal, Québec</p>
+  </footer>
+</body>
+</html>

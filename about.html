@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>À propos — KCl</title>
+  <meta name="description" content="L'histoire derrière KCl, l'outil d'optimisation PC pour gamers fait au Québec.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{400:'#6b8aff',500:'#3a5cf5',600:'#2a47d4'}},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body{background:#0a0a0f;color:#e2e8f0;font-family:'Inter',sans-serif}.gradient-text{background:linear-gradient(135deg,#6b8aff,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.glass{background:rgba(255,255,255,0.03);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}</style>
+</head>
+<body>
+  <nav class="sticky top-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center font-bold">⚡</div>
+        <span class="text-lg font-bold gradient-text">KCl</span>
+      </a>
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <a href="/#features" class="hover:text-white text-slate-400">Fonctionnalités</a>
+        <a href="/#pricing" class="hover:text-white text-slate-400">Tarifs</a>
+        <a href="/blog/" class="hover:text-white text-slate-400">Blog</a>
+        <a href="/about.html" class="text-white">À propos</a>
+        <a href="/contact.html" class="hover:text-white text-slate-400">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-3xl mx-auto px-6 py-16">
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-6">À propos de <span class="gradient-text">KCl</span></h1>
+
+    <div class="prose prose-invert max-w-none text-slate-300 leading-relaxed space-y-5">
+      <p class="text-lg text-slate-400">KCl est un outil d'optimisation PC pensé par et pour les gamers francophones, créé en 2026 au Québec.</p>
+
+      <h2 class="text-2xl font-bold text-white mt-10 mb-3">Notre mission</h2>
+      <p>Rendre les vraies optimisations Windows accessibles à tous. Pas besoin d'être expert pour gagner des FPS, réduire la latence ou virer les services Windows inutiles. KCl fait l'analyse, propose ce qui s'applique à TON setup, et applique les changements en un clic — avec un point de restauration créé automatiquement avant.</p>
+
+      <h2 class="text-2xl font-bold text-white mt-10 mb-3">Pourquoi KCl ?</h2>
+      <p>Les outils existants comme Hone ou EXM sont anglophones, payants dès le premier tweak, et ne tiennent pas compte des spécificités de chaque PC. KCl prend une approche différente :</p>
+      <ul class="space-y-2 pl-5 list-disc">
+        <li><strong class="text-white">Smart Mode IA</strong> : scan complet du hardware, détection des anti-cheats, recommandations contextuelles</li>
+        <li><strong class="text-white">100% francophone</strong> : interface, scripts, support — tout en français, avec accent Québec</li>
+        <li><strong class="text-white">Anti-cheat aware</strong> : aucun tweak risqué proposé si Vanguard, EAC ou FACEIT détectés</li>
+        <li><strong class="text-white">Forfait gratuit généreux</strong> : 82 optimisations basiques sans payer, vs 0 chez les concurrents</li>
+      </ul>
+
+      <h2 class="text-2xl font-bold text-white mt-10 mb-3">L'équipe</h2>
+      <p>KCl est développé par une petite équipe basée à Montréal. Notre fondatrice est une gameuse passionnée qui en avait marre de bricoler des fichiers .reg trouvés sur Reddit avant chaque session compétitive.</p>
+
+      <h2 class="text-2xl font-bold text-white mt-10 mb-3">Stack technique</h2>
+      <p>KCl est construit avec Electron, React, Vite, Tailwind CSS et PowerShell. Les scripts PowerShell sont signés, ouverts et auditables — tu peux lire chaque script avant de l'exécuter dans l'app.</p>
+
+      <h2 class="text-2xl font-bold text-white mt-10 mb-3">Open source ?</h2>
+      <p>Les scripts PowerShell de KCl seront publiés sur GitHub courant 2026 sous licence MIT, pour permettre à la communauté de vérifier ce que fait chaque optimisation. L'application Electron reste propriétaire pour soutenir le développement.</p>
+
+      <h2 class="text-2xl font-bold text-white mt-10 mb-3">Contact</h2>
+      <p>Une question ? Une suggestion de tweak ? <a href="/contact.html" class="text-brand-400 hover:text-brand-300 underline">Contacte-nous</a>. On lit tout, on répond à tout (en français ou en anglais).</p>
+    </div>
+  </main>
+
+  <footer class="border-t border-white/5 px-6 py-8 mt-16 text-center text-xs text-slate-500">
+    <p>© 2026 KCl · Made with ⚡ in Montréal, Québec</p>
+    <p class="mt-2"><a href="/privacy.html" class="hover:text-white">Confidentialité</a> · <a href="/terms.html" class="hover:text-white">Conditions</a> · <a href="/contact.html" class="hover:text-white">Contact</a></p>
+  </footer>
+</body>
+</html>

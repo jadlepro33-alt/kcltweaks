@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optimiser Windows 11 pour le gaming en 2026 — KCl</title>
+  <meta name="description" content="Guide complet 2026 pour optimiser Windows 11 pour le gaming. Game Mode, HAGS, Memory Integrity, services à désactiver. +15 FPS garantis.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{400:'#6b8aff',500:'#3a5cf5'}},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body{background:#0a0a0f;color:#e2e8f0;font-family:'Inter',sans-serif}.gradient-text{background:linear-gradient(135deg,#6b8aff,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.glass{background:rgba(255,255,255,0.03);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}article h2{font-size:1.5rem;font-weight:700;color:white;margin-top:2.5rem;margin-bottom:1rem}article h3{font-size:1.15rem;font-weight:600;color:white;margin-top:2rem;margin-bottom:0.75rem}article p{margin-bottom:1rem;line-height:1.7}article ul{margin-left:1.5rem;margin-bottom:1rem;list-style:disc}article li{margin-bottom:0.5rem}article code{background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:0.85em;color:#a78bfa}article pre{background:rgba(0,0,0,0.4);padding:1rem;border-radius:8px;overflow-x:auto;margin-bottom:1rem}</style>
+</head>
+<body>
+  <nav class="sticky top-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center font-bold">⚡</div>
+        <span class="text-lg font-bold gradient-text">KCl</span>
+      </a>
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <a href="/blog/" class="text-white">← Blog</a>
+        <a href="/#download" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-brand-500 to-purple-500 font-semibold">Télécharger</a>
+      </div>
+    </div>
+  </nav>
+
+  <article class="max-w-3xl mx-auto px-6 py-16 text-slate-300">
+    <div class="text-[11px] uppercase tracking-wider text-brand-400 font-bold mb-3">Tutoriel · 8 min · 12 mai 2026</div>
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">Optimiser Windows 11 pour le gaming en 2026</h1>
+    <p class="text-lg text-slate-400 mb-8">Windows 11 est devenu le standard, mais il vient avec des paramètres par défaut qui bouffent ressources et FPS. Voici le guide complet 2026 pour récupérer 10 à 20% de performances en gaming.</p>
+
+    <h2>Pourquoi Windows 11 plombe les FPS</h2>
+    <p>Microsoft a empilé sur Windows 11 plusieurs couches de sécurité (Virtualization Based Security, Memory Integrity, Defender Cloud) qui consomment du CPU même quand tu joues. À ça s'ajoutent des services télémétrie, Cortana, Xbox Game Bar, Phone Link qui tournent en arrière-plan.</p>
+    <p>Sur un PC gaming dédié, ces fonctions n'apportent rien — et coûtent entre 5 et 15% de FPS dans les jeux compétitifs. La bonne nouvelle : tout est désactivable proprement.</p>
+
+    <h2>Étape 1 : activer le Game Mode</h2>
+    <p>Le Game Mode de Windows 11 désactive les notifications, met en pause les MAJ et priorise le processus en plein écran. C'est gratuit et 100% safe.</p>
+    <p>Va dans <code>Paramètres → Jeux → Mode Jeu</code> et active. Si tu as Xbox Game Bar dans la liste, désactive-le aussi (raccourci Win+G inutile et consomme de la RAM).</p>
+
+    <h2>Étape 2 : Hardware-Accelerated GPU Scheduling (HAGS)</h2>
+    <p>HAGS délègue la gestion mémoire GPU au pilote au lieu de Windows. Sur les GPU récents (NVIDIA 1000+, AMD 5000+) ça réduit la latence et stabilise les FPS.</p>
+    <p>Direction <code>Paramètres → Système → Affichage → Graphismes → Paramètres graphiques par défaut</code> et active "Planification GPU à accélération matérielle". Redémarre obligatoirement après.</p>
+
+    <h2>Étape 3 : Memory Integrity (HVCI) à désactiver — avec précautions</h2>
+    <p>Memory Integrity protège le kernel via virtualisation. Coût mesuré : 3 à 10% de FPS sur les CPUs récents. Si tu joues à des jeux compétitifs (Valorant, CS2, Apex), désactive-le.</p>
+    <p><strong>Attention</strong> : ne le désactive PAS si tu utilises ton PC pour du travail sensible (banking, télétravail entreprise). Le compromis sécurité/perf est réel.</p>
+    <p><code>Sécurité Windows → Sécurité de l'appareil → Détails de l'isolation du noyau → Intégrité de la mémoire : Désactivé</code>. Redémarre.</p>
+
+    <h2>Étape 4 : Virtualization Based Security (VBS)</h2>
+    <p>VBS isole le kernel via Hyper-V. C'est l'impact perf le plus élevé : 5 à 15% de FPS sur la plupart des jeux. Pour le couper :</p>
+    <pre><code>msinfo32</code></pre>
+    <p>Vérifie la ligne "Sécurité basée sur la virtualisation". Si "En cours d'exécution", elle est active. Pour désactiver via registre :</p>
+    <pre><code>HKLM\SYSTEM\CurrentControlSet\Control\DeviceGuard
+EnableVirtualizationBasedSecurity = 0</code></pre>
+    <p>Là aussi, redémarre. <strong>Vérifie en jeu</strong> avant et après : sur certains setups le gain est de 2%, sur d'autres 12%. Ça dépend du CPU.</p>
+
+    <h2>Étape 5 : services Windows inutiles pour gamer</h2>
+    <p>Liste des services à passer en <code>Manual</code> ou <code>Disabled</code> (selon tes besoins) :</p>
+    <ul>
+      <li><strong>SysMain (Superfetch)</strong> : préchargement RAM, inutile sur SSD NVMe</li>
+      <li><strong>Windows Search</strong> : indexation disque, perte de 5-10% I/O</li>
+      <li><strong>Print Spooler</strong> : si tu n'imprimes pas</li>
+      <li><strong>Connected User Experiences and Telemetry (DiagTrack)</strong> : télémétrie Microsoft</li>
+      <li><strong>Xbox Live Auth Manager</strong> : si tu ne joues pas via Xbox</li>
+      <li><strong>Windows Update Medic Service (WaaSMedic)</strong> : force MAJ à des moments incongrus</li>
+      <li><strong>Adobe services</strong> : si tu n'utilises pas Creative Cloud actif</li>
+    </ul>
+
+    <h2>Étape 6 : Game Bar + DVR profond</h2>
+    <p>Même désactivé dans Paramètres, Xbox Game Bar laisse des résidus. Pour un kill complet :</p>
+    <pre><code>HKCU\System\GameConfigStore
+GameDVR_Enabled = 0
+
+HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR
+AllowGameDVR = 0</code></pre>
+    <p>Désactive aussi <code>BcastDVRUserService</code> dans services.msc.</p>
+
+    <h2>Étape 7 : System Responsiveness à 0</h2>
+    <p>Windows réserve 20% du CPU pour les tâches background par défaut. Pour les jeux, on veut le contraire : 100% prioritaire au foreground.</p>
+    <pre><code>HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile
+SystemResponsiveness = 0</code></pre>
+
+    <h2>Étape 8 : NVIDIA / AMD / Intel — les bons réglages</h2>
+    <p>Côté GPU, va dans le panneau de contrôle de ton fabricant :</p>
+    <ul>
+      <li><strong>NVIDIA</strong> : <em>Gérer les paramètres 3D → Mode faible latence = Ultra · Mode de gestion de l'alimentation = Performances maximales</em></li>
+      <li><strong>AMD</strong> : <em>Gaming → Paramètres globaux → Anti-Lag activé · Chill désactivé · Boost désactivé</em></li>
+      <li><strong>Intel iGPU</strong> : <em>Power → Maximum Performance</em></li>
+    </ul>
+
+    <h2>Faire tout ça en 1 clic avec KCl</h2>
+    <p>Tu peux appliquer toutes ces 30+ optimisations manuellement (compte 2-3 heures), ou utiliser <a href="/" class="text-brand-400 hover:underline">KCl</a> qui détecte ton hardware, recommande uniquement ce qui s'applique à TON PC, et applique tout en 30 secondes — avec un point de restauration créé automatiquement avant.</p>
+    <p>Tous les tweaks de ce guide sont inclus dans le forfait Gratuit. Les optimisations plus avancées (VBS, HVCI, IRQ affinity GPU, profils par jeu) sont dans Premium ou Pro.</p>
+
+    <div class="glass rounded-2xl p-6 mt-12 text-center">
+      <h3 class="text-xl font-bold mb-2">Télécharge KCl gratuit</h3>
+      <p class="text-sm text-slate-400 mb-4">82 tweaks débloqués sans payer · Windows 10/11 · 35 Mo</p>
+      <a href="/#download" class="inline-block px-6 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-brand-500 to-purple-500">⬇ Télécharger</a>
+    </div>
+  </article>
+
+  <footer class="border-t border-white/5 px-6 py-8 mt-16 text-center text-xs text-slate-500">
+    <p>© 2026 KCl · Made with ⚡ in Montréal, Québec</p>
+  </footer>
+</body>
+</html>

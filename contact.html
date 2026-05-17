@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — KCl</title>
+  <meta name="description" content="Contactez l'équipe KCl pour support, suggestions ou partenariats.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{400:'#6b8aff',500:'#3a5cf5'}},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>body{background:#0a0a0f;color:#e2e8f0;font-family:'Inter',sans-serif}.gradient-text{background:linear-gradient(135deg,#6b8aff,#a78bfa,#f472b6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}.glass{background:rgba(255,255,255,0.03);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.08)}</style>
+</head>
+<body>
+  <nav class="sticky top-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center font-bold">⚡</div>
+        <span class="text-lg font-bold gradient-text">KCl</span>
+      </a>
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <a href="/#features" class="hover:text-white text-slate-400">Fonctionnalités</a>
+        <a href="/#pricing" class="hover:text-white text-slate-400">Tarifs</a>
+        <a href="/blog/" class="hover:text-white text-slate-400">Blog</a>
+        <a href="/about.html" class="hover:text-white text-slate-400">À propos</a>
+        <a href="/contact.html" class="text-white">Contact</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-2xl mx-auto px-6 py-16">
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-3">Contact</h1>
+    <p class="text-lg text-slate-400 mb-12">Une question, une suggestion, un bug à signaler ? On lit tout, on répond à tout (en français).</p>
+
+    <div class="grid md:grid-cols-2 gap-4 mb-10">
+      <a href="mailto:support@kcl-app.com" class="glass rounded-2xl p-6 hover:border-brand-500/30 transition block">
+        <div class="text-3xl mb-3">💬</div>
+        <h3 class="text-lg font-bold mb-1">Support technique</h3>
+        <p class="text-sm text-slate-400 mb-2">Bug, question d'utilisation, problème de licence.</p>
+        <p class="text-xs text-brand-400 font-mono">support@kcl-app.com</p>
+      </a>
+      <a href="mailto:hello@kcl-app.com" class="glass rounded-2xl p-6 hover:border-brand-500/30 transition block">
+        <div class="text-3xl mb-3">✨</div>
+        <h3 class="text-lg font-bold mb-1">Général</h3>
+        <p class="text-sm text-slate-400 mb-2">Suggestions, idées de tweaks, retours.</p>
+        <p class="text-xs text-brand-400 font-mono">hello@kcl-app.com</p>
+      </a>
+      <a href="mailto:business@kcl-app.com" class="glass rounded-2xl p-6 hover:border-brand-500/30 transition block">
+        <div class="text-3xl mb-3">🤝</div>
+        <h3 class="text-lg font-bold mb-1">Partenariats</h3>
+        <p class="text-sm text-slate-400 mb-2">Streameurs, sponsors, intégrations.</p>
+        <p class="text-xs text-brand-400 font-mono">business@kcl-app.com</p>
+      </a>
+      <a href="mailto:privacy@kcl-app.com" class="glass rounded-2xl p-6 hover:border-brand-500/30 transition block">
+        <div class="text-3xl mb-3">🔒</div>
+        <h3 class="text-lg font-bold mb-1">Données / Confidentialité</h3>
+        <p class="text-sm text-slate-400 mb-2">RGPD, Loi 25, demandes légales.</p>
+        <p class="text-xs text-brand-400 font-mono">privacy@kcl-app.com</p>
+      </a>
+    </div>
+
+    <div class="glass rounded-2xl p-8">
+      <h2 class="text-xl font-bold mb-3">Adresse postale</h2>
+      <p class="text-sm text-slate-400 font-mono">
+        KCl<br>
+        Montréal, Québec<br>
+        Canada
+      </p>
+      <h2 class="text-xl font-bold mb-3 mt-8">Délai de réponse</h2>
+      <p class="text-sm text-slate-400">
+        Sous 48 heures ouvrées en moyenne. Plus rapide pour les clients Premium et Pro (24h).
+      </p>
+    </div>
+
+    <div class="mt-10 p-5 glass rounded-2xl border-amber-500/20">
+      <h3 class="text-sm font-bold text-amber-300 mb-2">⚠ Tu cherches une réponse rapide ?</h3>
+      <p class="text-sm text-slate-300">Consulte d'abord notre <a href="/blog/" class="text-brand-400 hover:underline">blog</a> — la plupart des questions courantes y sont traitées avec captures d'écran.</p>
+    </div>
+  </main>
+
+  <footer class="border-t border-white/5 px-6 py-8 mt-16 text-center text-xs text-slate-500">
+    <p>© 2026 KCl · Made with ⚡ in Montréal, Québec</p>
+  </footer>
+</body>
+</html>
