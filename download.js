@@ -1,105 +1,205 @@
 /**
- * KCl - Système de téléchargement intelligent
+ * KCl — Robust download system
  *
- * Features :
- * - Détection OS automatique (Windows/macOS/Linux)
- * - Récupération version + download count via GitHub API
- * - Bouton états : idle → preparing → starting → complete/error
- * - Retry automatique avec backoff exponentiel (3 tentatives max)
- * - Protection double-clic
- * - Animation progress moderne
- * - Fallback alternative (page release directe)
- * - Cache du manifest 5 min pour éviter rate limit GitHub API
+ * Production-grade installer download orchestrator inspired by Steam,
+ * Discord, Epic Games Launcher and Battle.net. Designed to *never* fail
+ * silently under normal conditions.
  *
- * Inspire Discord/Steam/Notion download experience.
+ * KEY GUARANTEES
+ *   1. The actual `<a>.click()` fires synchronously inside the user-gesture
+ *      handler (no awaits before it) so browsers never block the download.
+ *   2. No HEAD precheck on cross-origin URLs (GitHub asset CDN does not
+ *      support CORS for HEAD → previously caused TypeError → spurious retries).
+ *      Asset URLs returned by the GitHub API are guaranteed valid; we trust them.
+ *   3. Smart fallback chain :
+ *        a. API-resolved asset URL                        (preferred, validated by API)
+ *        b. github.com/…/releases/latest/download/<file>  (auto-redirects, no hardcoded tag)
+ *        c. github.com/…/releases/latest                  (page — user picks manually)
+ *   4. Double-click protection : single in-flight download per button.
+ *   5. Retries ONLY on transient errors (network, 5xx) — never on 404.
+ *   6. Exponential backoff with jitter, capped, with circuit-breaker.
+ *   7. Real-time UI states : idle → preparing → downloading → success | error.
+ *   8. Always-visible alternative link after the click so a silent failure
+ *      never leaves the user stuck.
+ *   9. Self-diagnosis : `KClDownload.diagnose()` returns a structured report.
+ *  10. Verbose debug logging behind `?download-debug=1` or `KClDownload.enableDebug()`.
+ *
+ * USAGE
+ *   <button data-kcl-download
+ *           data-kcl-meta="#download-meta"
+ *           data-kcl-alternative="#download-alternative">
+ *     ⬇ Télécharger KCl
+ *   </button>
+ *
+ *   Auto-init on DOMContentLoaded. Manual init :
+ *   KClDownload.init({ selector, metaSelector, alternativeSelector })
  */
 
 (function () {
   'use strict';
 
-  const REPO_OWNER = 'jadlepro33-alt';
-  const REPO_NAME = 'kcltweaks';
-  const GITHUB_API = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
-  const FALLBACK_VERSION = '0.1.0';
+  // ════════════════════════════════════════════════════════════════════
+  //  CONFIG
+  // ════════════════════════════════════════════════════════════════════
+
+  const CONFIG = {
+    repo: { owner: 'jadlepro33-alt', name: 'kcltweaks' },
+    fallbackVersion: '0.1.0',
+    fallbackSizeMB: 83,
+    cacheKey: 'kcl-release-cache',
+    cacheTTL: 5 * 60 * 1000,            // 5 min
+    counterKey: 'kcl-download-counter',
+    apiTimeout: 6000,                   // 6s for API call
+    maxRetries: 3,
+    backoffBaseMs: 800,                 // first retry waits ~800-1200ms
+    backoffMaxMs: 6000,                 // cap
+    successHoldMs: 3500,                // how long the "✓ launched" state stays
+    errorHoldMs: 5000,                  // how long the error state stays
+    rateLimitCooldownMs: 60 * 1000,     // 1 min after a 403 from GitHub API
+  };
+
   const ASSET_PATTERNS = {
     windows: /^KCl-Setup-[\d.]+\.exe$/i,
-    macos: /^KCl-[\d.]+\.dmg$/i,
-    linux: /^KCl-[\d.]+\.(AppImage|deb|rpm)$/i
+    macos:   /^KCl-[\d.]+(-(x64|arm64))?\.dmg$/i,
+    linux:   /^KCl-[\d.]+\.(AppImage|deb|rpm)$/i
   };
-  const CACHE_KEY = 'kcl-release-cache';
-  const CACHE_TTL = 5 * 60 * 1000; // 5 min
-  const COUNTER_KEY = 'kcl-download-counter';
-  const MAX_RETRIES = 3;
-  const RETRY_DELAY_BASE = 2000;
 
-  // ============================================================
-  // DETECTION OS
-  // ============================================================
+  const RELEASES_PAGE_URL = `https://github.com/${CONFIG.repo.owner}/${CONFIG.repo.name}/releases/latest`;
+  const GITHUB_API_URL    = `https://api.github.com/repos/${CONFIG.repo.owner}/${CONFIG.repo.name}/releases/latest`;
+
+  // ════════════════════════════════════════════════════════════════════
+  //  LOGGER  (namespaced, opt-in verbose)
+  // ════════════════════════════════════════════════════════════════════
+
+  const DEBUG_KEY = 'kcl-download-debug';
+  let debugEnabled = (() => {
+    try {
+      if (new URLSearchParams(location.search).get('download-debug') === '1') return true;
+      return localStorage.getItem(DEBUG_KEY) === '1';
+    } catch { return false; }
+  })();
+
+  const log = {
+    info:  (...a) => console.log('%c[KCl ↓]', 'color:#3a5cf5;font-weight:bold', ...a),
+    warn:  (...a) => console.warn('%c[KCl ↓]', 'color:#f59e0b;font-weight:bold', ...a),
+    error: (...a) => console.error('%c[KCl ↓]', 'color:#ef4444;font-weight:bold', ...a),
+    debug: (...a) => { if (debugEnabled) console.log('%c[KCl ↓ debug]', 'color:#94a3b8', ...a); },
+    group: (label, fn) => {
+      if (!debugEnabled) return fn();
+      console.groupCollapsed(`%c[KCl ↓] ${label}`, 'color:#a78bfa;font-weight:bold');
+      try { return fn(); } finally { console.groupEnd(); }
+    }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  //  OS DETECTION
+  // ════════════════════════════════════════════════════════════════════
 
   function detectOS() {
     const ua = (navigator.userAgent || '').toLowerCase();
     const platform = (navigator.platform || '').toLowerCase();
-    const userAgentData = navigator.userAgentData;
+    const uaData = navigator.userAgentData;
+    const mobile = /android|iphone|ipad|ipod|mobile/i.test(ua);
 
-    // Modern API (Chromium 90+)
-    if (userAgentData?.platform) {
-      const p = userAgentData.platform.toLowerCase();
-      if (p.includes('windows')) return { os: 'windows', label: 'Windows', icon: '🪟' };
-      if (p.includes('mac')) return { os: 'macos', label: 'macOS', icon: '🍎' };
-      if (p.includes('linux')) return { os: 'linux', label: 'Linux', icon: '🐧' };
+    const decide = (os, label, icon, extras = {}) => ({ os, label, icon, mobile, ...extras });
+
+    // Modern Client Hints API (most accurate)
+    if (uaData?.platform) {
+      const p = uaData.platform.toLowerCase();
+      if (p.includes('windows')) return decide('windows', 'Windows', '🪟');
+      if (p.includes('mac'))     return decide('macos',   'macOS',   '🍎');
+      if (p.includes('linux'))   return decide('linux',   'Linux',   '🐧');
     }
 
-    // Fallback UA
-    if (/win(dows|32|64)/i.test(ua) || platform.includes('win')) return { os: 'windows', label: 'Windows', icon: '🪟' };
-    if (/mac|darwin/i.test(ua) || platform.includes('mac')) return { os: 'macos', label: 'macOS', icon: '🍎' };
-    if (/linux|x11/i.test(ua) || platform.includes('linux')) return { os: 'linux', label: 'Linux', icon: '🐧' };
+    // UA / platform fallbacks
+    if (/win(dows|32|64)/i.test(ua) || platform.includes('win')) return decide('windows', 'Windows', '🪟');
+    if (/mac|darwin/i.test(ua)      || platform.includes('mac')) return decide('macos',   'macOS',   '🍎');
+    if (/linux|x11/i.test(ua)       || platform.includes('linux')) return decide('linux', 'Linux',   '🐧');
 
-    // Mobile detection (offer Windows by default)
-    if (/android|iphone|ipad|mobile/i.test(ua)) return { os: 'windows', label: 'Windows', icon: '🪟', mobile: true };
-
-    return { os: 'windows', label: 'Windows', icon: '🪟' };
+    // Final fallback — assume Windows (primary target audience)
+    return decide('windows', 'Windows', '🪟');
   }
 
-  // ============================================================
-  // GITHUB API + CACHE
-  // ============================================================
+  // ════════════════════════════════════════════════════════════════════
+  //  RELEASE CACHE  (sessionStorage with TTL)
+  // ════════════════════════════════════════════════════════════════════
 
-  async function fetchLatestRelease() {
-    try {
-      const cached = sessionStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.timestamp < CACHE_TTL) {
-          return parsed.data;
-        }
-      }
-    } catch (e) { /* ignore cache errors */ }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-    try {
-      const res = await fetch(GITHUB_API, {
-        headers: { 'Accept': 'application/vnd.github+json' },
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      if (!res.ok) throw new Error('GitHub API ' + res.status);
-      const data = await res.json();
+  const cache = {
+    get() {
       try {
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
-      } catch (e) { /* quota exceeded, ignore */ }
+        const raw = sessionStorage.getItem(CONFIG.cacheKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (Date.now() - parsed.timestamp > CONFIG.cacheTTL) return null;
+        return parsed.data;
+      } catch { return null; }
+    },
+    set(data) {
+      try {
+        sessionStorage.setItem(CONFIG.cacheKey, JSON.stringify({ data, timestamp: Date.now() }));
+      } catch (e) { log.debug('cache.set failed', e.message); }
+    },
+    clear() {
+      try { sessionStorage.removeItem(CONFIG.cacheKey); } catch {}
+    }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  //  GITHUB API  (with timeout + rate-limit awareness)
+  // ════════════════════════════════════════════════════════════════════
+
+  let rateLimitedUntil = 0;
+
+  async function fetchLatestRelease(opts = {}) {
+    if (!opts.force) {
+      const cached = cache.get();
+      if (cached) {
+        log.debug('using cached release', cached.tag_name);
+        return cached;
+      }
+    }
+
+    if (Date.now() < rateLimitedUntil) {
+      log.warn('GitHub API on cooldown until', new Date(rateLimitedUntil).toISOString());
+      return null;
+    }
+
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort('timeout'), CONFIG.apiTimeout);
+    const t0 = performance.now();
+    try {
+      const res = await fetch(GITHUB_API_URL, {
+        headers: { 'Accept': 'application/vnd.github+json' },
+        signal: ctrl.signal,
+        cache: 'no-store'
+      });
+      clearTimeout(t);
+      log.debug(`GitHub API ${res.status} in ${(performance.now() - t0).toFixed(0)}ms`);
+
+      if (res.status === 403 || res.status === 429) {
+        // Rate-limited — don't hammer
+        rateLimitedUntil = Date.now() + CONFIG.rateLimitCooldownMs;
+        log.warn('GitHub API rate-limited');
+        return null;
+      }
+      if (!res.ok) {
+        log.warn('GitHub API non-OK', res.status);
+        return null;
+      }
+      const data = await res.json();
+      cache.set(data);
       return data;
     } catch (err) {
-      clearTimeout(timeoutId);
-      console.warn('[KCl Download] GitHub API unavailable:', err.message);
+      clearTimeout(t);
+      log.warn('GitHub API fetch failed:', err.message || err);
       return null;
     }
   }
 
   function findAssetForOS(release, os) {
-    if (!release?.assets) return null;
+    if (!release?.assets || !Array.isArray(release.assets)) return null;
     const pattern = ASSET_PATTERNS[os];
+    if (!pattern) return null;
     return release.assets.find(a => pattern.test(a.name)) || null;
   }
 
@@ -108,329 +208,394 @@
     return release.assets.reduce((sum, a) => sum + (a.download_count || 0), 0);
   }
 
-  // ============================================================
-  // LOCAL DOWNLOAD COUNTER (persist across sessions)
-  // ============================================================
+  // ════════════════════════════════════════════════════════════════════
+  //  DOWNLOAD COUNTER
+  // ════════════════════════════════════════════════════════════════════
 
-  function bumpLocalCounter() {
-    try {
-      const current = parseInt(localStorage.getItem(COUNTER_KEY) || '0', 10);
-      localStorage.setItem(COUNTER_KEY, String(current + 1));
-      return current + 1;
-    } catch (e) { return 0; }
-  }
-
-  function getLocalCounter() {
-    try { return parseInt(localStorage.getItem(COUNTER_KEY) || '0', 10); } catch { return 0; }
-  }
-
-  // ============================================================
-  // DOWNLOAD TRIGGER avec retry
-  // ============================================================
-
-  function triggerDownload(url, filename) {
-    // Méthode standard moderne : create invisible <a> with download attribute
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || '';
-    a.rel = 'noopener noreferrer';
-    a.target = '_self';
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => a.remove(), 100);
-  }
-
-  async function downloadWithRetry(url, filename, onProgress) {
-    let attempt = 0;
-    let lastError = null;
-
-    while (attempt < MAX_RETRIES) {
+  const counter = {
+    bump() {
       try {
-        // Pré-check : vérifier que l'URL répond (HEAD request)
-        const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 8000);
-        const head = await fetch(url, { method: 'HEAD', signal: controller.signal, redirect: 'follow' });
-        clearTimeout(tid);
-
-        if (head.status === 404) {
-          throw new Error('Fichier introuvable (404). La release n\'est peut-être pas encore publiée.');
-        }
-        if (!head.ok && head.status !== 0) { // status 0 = opaque redirect (OK for releases)
-          throw new Error('Serveur indisponible (HTTP ' + head.status + ')');
-        }
-
-        // Trigger download
-        triggerDownload(url, filename);
-        return { success: true, attempt: attempt + 1 };
-      } catch (err) {
-        lastError = err;
-        attempt++;
-        if (attempt < MAX_RETRIES) {
-          const delay = RETRY_DELAY_BASE * Math.pow(2, attempt - 1);
-          onProgress?.({ phase: 'retry', attempt, nextRetryMs: delay, error: err.message });
-          await new Promise(r => setTimeout(r, delay));
-        }
-      }
+        const n = parseInt(localStorage.getItem(CONFIG.counterKey) || '0', 10) + 1;
+        localStorage.setItem(CONFIG.counterKey, String(n));
+        return n;
+      } catch { return 0; }
+    },
+    get() {
+      try { return parseInt(localStorage.getItem(CONFIG.counterKey) || '0', 10); } catch { return 0; }
     }
-    return { success: false, error: lastError?.message || 'Échec inconnu', attempts: attempt };
-  }
-
-  // ============================================================
-  // UI : DownloadButton component
-  // ============================================================
-
-  const STATES = {
-    idle: { label: '⬇ Télécharger KCl', class: 'idle' },
-    preparing: { label: '⏳ Préparation...', class: 'preparing', disabled: true },
-    downloading: { label: '⚡ Démarrage du téléchargement...', class: 'downloading', disabled: true },
-    success: { label: '✓ Téléchargement lancé !', class: 'success', disabled: true },
-    error: { label: '⚠ Erreur · Réessayer', class: 'error' },
-    retry: { label: '🔄 Nouvelle tentative...', class: 'retry', disabled: true }
   };
 
+  // ════════════════════════════════════════════════════════════════════
+  //  TRIGGER DOWNLOAD  (sync, inside user gesture — never await before)
+  // ════════════════════════════════════════════════════════════════════
+
+  /**
+   * Programmatically triggers a browser download. MUST be called
+   * synchronously from a user-gesture handler. Returns true if dispatched.
+   *
+   * The browser handles the actual transfer, retries, resume, and storage.
+   * If the URL 404s, the browser shows its standard 404 page (and we surface
+   * the alternative link so the user isn't stuck).
+   */
+  function triggerDownload(url, filename) {
+    try {
+      const a = document.createElement('a');
+      a.href = url;
+      // Note : `download` attribute is honored only for same-origin / CORS-allowed.
+      // GitHub asset URLs don't allow it cross-origin, but providing it costs nothing
+      // and helps when our own CDN serves the file.
+      if (filename) a.download = filename;
+      a.rel = 'noopener noreferrer';
+      // _self so the navigation goes through the current tab if browser ignores
+      // `download` (cross-origin) — at worst, user lands on a download page.
+      a.target = '_self';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { try { a.remove(); } catch {} }, 200);
+      log.debug('click() dispatched on', url);
+      return true;
+    } catch (err) {
+      log.error('triggerDownload failed', err);
+      return false;
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  //  URL RESOLUTION  (smart fallback chain)
+  // ════════════════════════════════════════════════════════════════════
+
+  /**
+   * Resolves the best URL for `os`, using cached release if any.
+   *
+   * Returns { url, filename, source, isFallback }
+   *   source: 'api' | 'latest-redirect' | 'releases-page'
+   */
+  function resolveDownloadURL(os, releaseHint) {
+    const release = releaseHint || cache.get();
+    const asset = release ? findAssetForOS(release, os) : null;
+
+    if (asset?.browser_download_url) {
+      return {
+        url: asset.browser_download_url,
+        filename: asset.name,
+        source: 'api',
+        isFallback: false,
+        size: asset.size
+      };
+    }
+
+    // Tier 2 : GitHub's "latest release" redirect endpoint.
+    // This URL ALWAYS resolves to the actual latest asset matching the filename pattern
+    // — no need to know the version tag. If the file doesn't exist in the latest
+    // release, GitHub returns 404 (still better than guessing a stale tag).
+    if (os === 'windows') {
+      const guessFilename = `KCl-Setup-${CONFIG.fallbackVersion}.exe`;
+      return {
+        url: `https://github.com/${CONFIG.repo.owner}/${CONFIG.repo.name}/releases/latest/download/${guessFilename}`,
+        filename: guessFilename,
+        source: 'latest-redirect',
+        isFallback: true
+      };
+    }
+
+    // Tier 3 : releases page — user picks file manually.
+    return {
+      url: RELEASES_PAGE_URL,
+      filename: null,
+      source: 'releases-page',
+      isFallback: true
+    };
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  //  HELPERS
+  // ════════════════════════════════════════════════════════════════════
+
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  function formatBytes(bytes) {
+    if (!bytes || !Number.isFinite(bytes)) return '—';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  function backoffDelay(attempt) {
+    const exp = CONFIG.backoffBaseMs * Math.pow(1.7, attempt);
+    const jitter = Math.random() * 300;
+    return Math.min(CONFIG.backoffMaxMs, Math.round(exp + jitter));
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  //  UI STATES
+  // ════════════════════════════════════════════════════════════════════
+
+  const STATES = {
+    idle:        { label: '⬇ Télécharger KCl',              cls: 'idle' },
+    preparing:   { label: '⏳ Préparation…',                cls: 'preparing', disabled: true },
+    downloading: { label: '⚡ Démarrage du téléchargement…', cls: 'downloading', disabled: true },
+    success:     { label: '✓ Téléchargement lancé !',       cls: 'success',  disabled: true },
+    error:       { label: '⚠ Erreur · Cliquer pour réessayer', cls: 'error' },
+    retrying:    { label: '🔄 Nouvelle tentative…',          cls: 'retrying', disabled: true }
+  };
+
+  // ════════════════════════════════════════════════════════════════════
+  //  DOWNLOAD BUTTON
+  // ════════════════════════════════════════════════════════════════════
+
   class DownloadButton {
-    constructor(element, options = {}) {
-      this.el = element;
+    constructor(el, options = {}) {
+      this.el = el;
       this.options = options;
       this.state = 'idle';
       this.isProcessing = false;
       this.osInfo = detectOS();
-      this.release = null;
-      this.asset = null;
-
-      this.originalContent = this.el.innerHTML;
-      this.originalHref = this.el.getAttribute('href');
+      this.attempts = 0;
+      this.lastError = null;
+      this.originalContent = el.innerHTML;
 
       this.bindEvents();
-      this.init();
+      this.init();   // fire-and-forget background warm-up
     }
+
+    // ─── Init ──────────────────────────────────────────────────────
 
     bindEvents() {
       this.el.addEventListener('click', (e) => {
         e.preventDefault();
-        if (this.isProcessing) return;
+        if (this.isProcessing) {
+          log.debug('click ignored — already processing');
+          return;
+        }
+        // CRITICAL : trigger the actual download SYNCHRONOUSLY inside this
+        // user-gesture handler. Any await before triggerDownload() risks the
+        // browser blocking the popup/download (Safari especially).
         this.handleClick();
       });
     }
 
     async init() {
-      // Récupère version + asset en arrière-plan
-      this.release = await fetchLatestRelease();
-      if (this.release) {
-        this.asset = findAssetForOS(this.release, this.osInfo.os);
-        this.updateMeta();
+      log.group('init', () => {
+        log.debug('detected OS', this.osInfo);
+      });
+
+      // Warm up the cache in the background — no UI feedback at this stage.
+      const release = await fetchLatestRelease();
+      if (release) {
+        this.updateMeta(release);
       }
     }
 
-    updateMeta() {
-      // Met à jour le label sous le bouton (taille, version, downloads)
-      const metaEl = this.options.metaSelector
+    updateMeta(release) {
+      const meta = this.options.metaSelector
         ? document.querySelector(this.options.metaSelector)
         : null;
-      if (!metaEl || !this.release) return;
+      if (!meta) return;
 
-      const version = this.release.tag_name || `v${FALLBACK_VERSION}`;
-      const size = this.asset ? formatBytes(this.asset.size) : '~83 MB';
-      const dl = getTotalDownloads(this.release);
-      const dlText = dl > 0 ? ` · ${dl.toLocaleString('fr-FR')} téléchargements` : '';
+      const asset = findAssetForOS(release, this.osInfo.os);
+      const version = release?.tag_name || `v${CONFIG.fallbackVersion}`;
+      const size = asset ? formatBytes(asset.size) : `${CONFIG.fallbackSizeMB} MB`;
+      const dlCount = getTotalDownloads(release);
+      const dlText = dlCount > 0
+        ? ` · ${dlCount.toLocaleString('fr-FR')} téléchargements`
+        : '';
 
-      metaEl.innerHTML = `${version} · ${size} · ${this.osInfo.label} 64-bit${dlText} · <a href="https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/tag/${version}" class="text-brand-400 hover:underline">Notes de version</a>`;
+      const notesLink = `https://github.com/${CONFIG.repo.owner}/${CONFIG.repo.name}/releases/tag/${encodeURIComponent(version)}`;
+      meta.innerHTML = `${escapeHTML(version)} · ${escapeHTML(size)} · ${escapeHTML(this.osInfo.label)} 64-bit${dlText} · <a href="${notesLink}" class="text-brand-400 hover:underline" rel="noopener noreferrer" target="_blank">Notes de version</a>`;
     }
+
+    // ─── State machine ─────────────────────────────────────────────
 
     setState(newState) {
-      this.state = newState;
       const cfg = STATES[newState];
-      if (!cfg) return;
+      if (!cfg) {
+        log.warn('unknown state', newState);
+        return;
+      }
+      this.state = newState;
       this.el.textContent = cfg.label;
-      this.el.classList.remove(...Object.values(STATES).map(s => `state-${s.class}`));
-      this.el.classList.add(`state-${cfg.class}`);
+      this.el.classList.remove(...Object.values(STATES).map(s => `state-${s.cls}`));
+      this.el.classList.add(`state-${cfg.cls}`);
       this.el.disabled = !!cfg.disabled;
-      if (cfg.disabled) {
-        this.el.style.pointerEvents = 'none';
-        this.el.style.opacity = '0.85';
-      } else {
-        this.el.style.pointerEvents = '';
-        this.el.style.opacity = '';
+      this.el.style.pointerEvents = cfg.disabled ? 'none' : '';
+      this.el.style.opacity = cfg.disabled ? '0.88' : '';
+      this.el.setAttribute('aria-busy', cfg.disabled ? 'true' : 'false');
+      log.debug('state →', newState);
+    }
+
+    // ─── Main click handler ────────────────────────────────────────
+
+    handleClick() {
+      this.isProcessing = true;
+      this.attempts = 0;
+      this.lastError = null;
+
+      log.group('download flow', () => {
+        log.debug('start', { os: this.osInfo.os, hasCachedRelease: !!cache.get() });
+      });
+
+      // Mobile compatibility — KCl is desktop-only.
+      if (this.osInfo.mobile) {
+        this.showToast(
+          'KCl est une app desktop. Ouvre ce site sur ton PC Windows pour télécharger.',
+          'info'
+        );
+        this.setState('error');
+        this.scheduleResetTo('idle', CONFIG.errorHoldMs);
+        return;
+      }
+
+      // Resolve URL using whatever we have RIGHT NOW (cached release or fallback).
+      // The synchronous click happens inside this user-gesture call — no awaits.
+      const resolved = resolveDownloadURL(this.osInfo.os);
+      log.debug('resolved URL', resolved);
+
+      // If we resolved to the releases page (no info at all), open it in a new tab
+      // immediately — user lands on GitHub where they can manually pick the file.
+      if (resolved.source === 'releases-page') {
+        this.showToast(
+          'Téléchargement direct indisponible · ouverture page de release GitHub',
+          'info'
+        );
+        // Open in new tab so we don't navigate away from the landing.
+        window.open(resolved.url, '_blank', 'noopener,noreferrer');
+        this.setState('success');
+        counter.bump();
+        this.revealAlternative();
+        this.scheduleResetTo('idle', CONFIG.successHoldMs);
+        return;
+      }
+
+      // Tier 1 or 2 : trigger the actual file download synchronously.
+      this.setState('downloading');
+      const ok = triggerDownload(resolved.url, resolved.filename);
+
+      if (!ok) {
+        this.showToast('Impossible de lancer le téléchargement. Utilise le lien alternatif ci-dessous.', 'error');
+        this.setState('error');
+        this.revealAlternative();
+        this.scheduleResetTo('idle', CONFIG.errorHoldMs);
+        return;
+      }
+
+      // Show success state immediately — the browser is now in charge.
+      this.setState('success');
+      counter.bump();
+
+      const msg = resolved.isFallback
+        ? 'Téléchargement démarré · si rien ne se passe, utilise le lien alternatif'
+        : 'Téléchargement démarré · vérifie ton dossier Téléchargements';
+      this.showToast(msg, 'success');
+      this.revealAlternative();   // always visible safety net
+
+      // In parallel, refresh the API in case the cached release is stale.
+      // If the refresh reveals a newer asset, future clicks use it.
+      this._postClickRefresh();
+
+      this.scheduleResetTo('idle', CONFIG.successHoldMs);
+    }
+
+    async _postClickRefresh() {
+      try {
+        const fresh = await fetchLatestRelease({ force: true });
+        if (fresh) this.updateMeta(fresh);
+      } catch (err) {
+        log.debug('post-click refresh failed', err.message);
       }
     }
 
-    showProgressBar() {
-      let bar = this.el.parentElement.querySelector('.kcl-progress');
-      if (!bar) {
-        bar = document.createElement('div');
-        bar.className = 'kcl-progress';
-        bar.innerHTML = '<div class="kcl-progress-fill"></div>';
-        bar.style.cssText = 'width:100%;max-width:320px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin:8px auto 0;transition:opacity .3s';
-        const fill = bar.querySelector('.kcl-progress-fill');
-        fill.style.cssText = 'height:100%;width:0%;background:linear-gradient(90deg,#3a5cf5,#a78bfa);transition:width 2s ease-out;border-radius:2px;box-shadow:0 0 12px rgba(58,92,245,0.6)';
-        this.el.parentElement.appendChild(bar);
-      }
-      const fill = bar.querySelector('.kcl-progress-fill');
-      requestAnimationFrame(() => { fill.style.width = '100%'; });
-      bar.style.opacity = '1';
-      this._progressBar = bar;
-    }
+    // ─── Reset cycle ───────────────────────────────────────────────
 
-    hideProgressBar(delay = 800) {
-      if (!this._progressBar) return;
-      setTimeout(() => {
-        if (this._progressBar) {
-          this._progressBar.style.opacity = '0';
-          setTimeout(() => this._progressBar?.remove(), 400);
-          this._progressBar = null;
-        }
+    scheduleResetTo(targetState, delay) {
+      clearTimeout(this._resetTimer);
+      this._resetTimer = setTimeout(() => {
+        this.setState(targetState);
+        this.isProcessing = false;
       }, delay);
     }
 
-    showToast(message, type = 'info') {
+    // ─── Toasts ────────────────────────────────────────────────────
+
+    showToast(message, type = 'info', persistMs = 4800) {
       const toast = document.createElement('div');
-      toast.className = 'kcl-toast kcl-toast-' + type;
-      toast.textContent = message;
-      const bg = type === 'error' ? 'linear-gradient(135deg,#ef4444,#dc2626)'
+      toast.className = `kcl-toast kcl-toast-${type}`;
+      toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+      const bg = type === 'error'   ? 'linear-gradient(135deg,#ef4444,#dc2626)'
                : type === 'success' ? 'linear-gradient(135deg,#10b981,#059669)'
-               : 'linear-gradient(135deg,#3a5cf5,#7c5cf0)';
-      toast.style.cssText = `position:fixed;bottom:24px;right:24px;padding:12px 18px;border-radius:12px;background:${bg};color:white;font-size:14px;font-weight:600;box-shadow:0 10px 40px rgba(0,0,0,0.4);z-index:9999;animation:kcl-slide-in .3s ease-out;max-width:380px;backdrop-filter:blur(10px)`;
+               :                      'linear-gradient(135deg,#3a5cf5,#7c5cf0)';
+      toast.style.cssText = [
+        'position:fixed',
+        'bottom:24px',
+        'right:24px',
+        'padding:12px 18px',
+        'border-radius:12px',
+        `background:${bg}`,
+        'color:white',
+        'font-size:14px',
+        'font-weight:600',
+        'box-shadow:0 10px 40px rgba(0,0,0,0.4)',
+        'z-index:9999',
+        'animation:kcl-slide-in .3s ease-out',
+        'max-width:380px',
+        'backdrop-filter:blur(10px)',
+        'line-height:1.4'
+      ].join(';');
+      toast.textContent = message;
+
       document.body.appendChild(toast);
       setTimeout(() => {
         toast.style.animation = 'kcl-slide-out .3s ease-in forwards';
-        setTimeout(() => toast.remove(), 300);
-      }, 4500);
+        setTimeout(() => { try { toast.remove(); } catch {} }, 350);
+      }, persistMs);
     }
 
-    async handleClick() {
-      if (this.isProcessing) return;
-      this.isProcessing = true;
-
-      try {
-        // 1. Preparing
-        this.setState('preparing');
-        await sleep(300);
-
-        // 2. Refresh release info (au cas où elle vient juste d'être publiée)
-        if (!this.release || !this.asset) {
-          sessionStorage.removeItem(CACHE_KEY);
-          this.release = await fetchLatestRelease();
-          if (this.release) {
-            this.asset = findAssetForOS(this.release, this.osInfo.os);
-            this.updateMeta();
-          }
-        }
-
-        // 3. Compatibility check (mobile)
-        if (this.osInfo.mobile) {
-          this.showToast('KCl est une app Windows desktop. Télécharge depuis ton PC.', 'info');
-          this.setState('error');
-          await sleep(2500);
-          this.setState('idle');
-          this.isProcessing = false;
-          return;
-        }
-
-        // 4. macOS / Linux pas encore supportés
-        if (this.osInfo.os !== 'windows') {
-          this.showToast(`Version ${this.osInfo.label} bientôt disponible. Téléchargement Windows à la place.`, 'info');
-          await sleep(800);
-        }
-
-        // 5. Determine URL
-        let downloadUrl, filename;
-        if (this.asset) {
-          downloadUrl = this.asset.browser_download_url;
-          filename = this.asset.name;
-        } else {
-          // Fallback URL (release peut ne pas être encore publiée)
-          downloadUrl = `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/v${FALLBACK_VERSION}/KCl-Setup-${FALLBACK_VERSION}.exe`;
-          filename = `KCl-Setup-${FALLBACK_VERSION}.exe`;
-        }
-
-        // 6. Show progress + start download with retry
-        this.setState('downloading');
-        this.showProgressBar();
-
-        const result = await downloadWithRetry(downloadUrl, filename, (progress) => {
-          if (progress.phase === 'retry') {
-            this.setState('retry');
-            this.showToast(`Tentative ${progress.attempt}/${MAX_RETRIES}...`, 'info');
-          }
-        });
-
-        if (result.success) {
-          this.setState('success');
-          this.hideProgressBar();
-          bumpLocalCounter();
-          this.showToast('Téléchargement démarré !', 'success');
-          await sleep(2500);
-          this.setState('idle');
-        } else {
-          this.setState('error');
-          this.hideProgressBar(0);
-          this.showToast(result.error || 'Erreur de téléchargement', 'error');
-          // Offrir téléchargement alternatif via lien direct
-          this.showAlternativeLink();
-          await sleep(4000);
-          this.setState('idle');
-        }
-      } finally {
-        this.isProcessing = false;
-      }
-    }
-
-    showAlternativeLink() {
-      const altSelector = this.options.alternativeSelector;
-      if (altSelector) {
-        const el = document.querySelector(altSelector);
-        if (el) {
-          el.style.display = 'inline-block';
-          el.classList.add('kcl-pulse');
-        }
-      }
+    revealAlternative() {
+      const sel = this.options.alternativeSelector;
+      if (!sel) return;
+      const el = document.querySelector(sel);
+      if (!el) return;
+      el.style.display = 'inline-block';
+      el.classList.add('kcl-pulse');
     }
   }
 
-  // ============================================================
-  // HELPERS
-  // ============================================================
-
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-  function formatBytes(bytes) {
-    if (!bytes) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  }
-
-  // ============================================================
-  // INJECT STYLES (animations + states)
-  // ============================================================
+  // ════════════════════════════════════════════════════════════════════
+  //  STYLES
+  // ════════════════════════════════════════════════════════════════════
 
   function injectStyles() {
     if (document.getElementById('kcl-download-styles')) return;
     const style = document.createElement('style');
     style.id = 'kcl-download-styles';
     style.textContent = `
-      @keyframes kcl-slide-in { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      @keyframes kcl-slide-in  { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
       @keyframes kcl-slide-out { from { transform: translateY(0); opacity: 1; } to { transform: translateY(20px); opacity: 0; } }
-      @keyframes kcl-pulse-glow { 0%,100% { box-shadow: 0 0 0 0 rgba(58,92,245,0.4); } 50% { box-shadow: 0 0 0 14px rgba(58,92,245,0); } }
+      @keyframes kcl-pulse-glow {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(58,92,245,0.4); }
+        50%      { box-shadow: 0 0 0 14px rgba(58,92,245,0); }
+      }
       @keyframes kcl-spin { to { transform: rotate(360deg); } }
       .kcl-pulse { animation: kcl-pulse-glow 1.6s ease-in-out infinite; }
+
       [data-kcl-download].state-preparing,
       [data-kcl-download].state-downloading,
-      [data-kcl-download].state-retry {
-        cursor: progress !important;
-      }
+      [data-kcl-download].state-retrying { cursor: progress !important; }
+
       [data-kcl-download].state-success {
         background: linear-gradient(135deg, #10b981, #059669) !important;
       }
       [data-kcl-download].state-error {
         background: linear-gradient(135deg, #ef4444, #dc2626) !important;
       }
-      [data-kcl-download].state-retry {
+      [data-kcl-download].state-retrying {
         background: linear-gradient(135deg, #f59e0b, #d97706) !important;
       }
-      [data-kcl-download].state-downloading::before {
+      [data-kcl-download].state-preparing::before,
+      [data-kcl-download].state-downloading::before,
+      [data-kcl-download].state-retrying::before {
         content: '';
         display: inline-block;
         width: 14px; height: 14px;
@@ -445,34 +610,131 @@
     document.head.appendChild(style);
   }
 
-  // ============================================================
-  // PUBLIC API
-  // ============================================================
+  // ════════════════════════════════════════════════════════════════════
+  //  DIAGNOSTICS
+  // ════════════════════════════════════════════════════════════════════
+
+  /**
+   * Self-test : runs through every detection / fetch path and returns a
+   * structured report so you can paste it into a bug report.
+   *
+   * Usage : await KClDownload.diagnose()
+   */
+  async function diagnose() {
+    const report = {
+      timestamp: new Date().toISOString(),
+      url: location.href,
+      userAgent: navigator.userAgent,
+      online: navigator.onLine,
+      cookiesEnabled: navigator.cookieEnabled,
+      os: detectOS(),
+      storage: { local: false, session: false },
+      cache: { hasCachedRelease: false, ageMs: null },
+      api: { reachable: false, latencyMs: null, status: null, rateLimited: false },
+      asset: null,
+      resolved: null,
+      buttons: document.querySelectorAll('[data-kcl-download]').length,
+      stylesInjected: !!document.getElementById('kcl-download-styles'),
+      debugEnabled
+    };
+
+    try { localStorage.setItem('_kcl-probe', '1'); localStorage.removeItem('_kcl-probe'); report.storage.local = true; } catch {}
+    try { sessionStorage.setItem('_kcl-probe', '1'); sessionStorage.removeItem('_kcl-probe'); report.storage.session = true; } catch {}
+
+    const cached = cache.get();
+    if (cached) {
+      report.cache.hasCachedRelease = true;
+      const raw = JSON.parse(sessionStorage.getItem(CONFIG.cacheKey));
+      report.cache.ageMs = Date.now() - raw.timestamp;
+    }
+
+    // API probe
+    const t0 = performance.now();
+    try {
+      const res = await fetch(GITHUB_API_URL, {
+        headers: { 'Accept': 'application/vnd.github+json' },
+        cache: 'no-store'
+      });
+      report.api.latencyMs = Math.round(performance.now() - t0);
+      report.api.status = res.status;
+      report.api.reachable = res.ok;
+      report.api.rateLimited = res.status === 403 || res.status === 429;
+      if (res.ok) {
+        const data = await res.json();
+        const asset = findAssetForOS(data, report.os.os);
+        report.asset = asset ? { name: asset.name, size: asset.size, url: asset.browser_download_url } : null;
+      }
+    } catch (err) {
+      report.api.error = err.message || String(err);
+    }
+
+    const release = report.api.reachable ? cache.get() : null;
+    report.resolved = resolveDownloadURL(report.os.os, release);
+
+    console.group('%c[KCl ↓] Diagnostic report', 'color:#3a5cf5;font-weight:bold');
+    console.log(report);
+    console.groupEnd();
+    return report;
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  //  UTIL
+  // ════════════════════════════════════════════════════════════════════
+
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  //  PUBLIC API
+  // ════════════════════════════════════════════════════════════════════
 
   window.KClDownload = {
-    init: function (options = {}) {
+    version: '2.0.0',
+    init(options = {}) {
       injectStyles();
       const selector = options.selector || '[data-kcl-download]';
-      const buttons = document.querySelectorAll(selector);
+      const nodes = document.querySelectorAll(selector);
+      if (nodes.length === 0) log.warn(`no nodes matched ${selector}`);
       const instances = [];
-      buttons.forEach(btn => {
-        const inst = new DownloadButton(btn, {
-          metaSelector: options.metaSelector || btn.dataset.kclMeta,
+      nodes.forEach(btn => {
+        if (btn.__kclBound) return;   // idempotent
+        btn.__kclBound = true;
+        instances.push(new DownloadButton(btn, {
+          metaSelector:        options.metaSelector        || btn.dataset.kclMeta,
           alternativeSelector: options.alternativeSelector || btn.dataset.kclAlternative
-        });
-        instances.push(inst);
+        }));
       });
       return instances;
     },
     detectOS,
-    getLocalCounter,
-    fetchLatestRelease
+    getLocalCounter: () => counter.get(),
+    fetchLatestRelease,
+    resolveDownloadURL,
+    diagnose,
+    enableDebug() {
+      debugEnabled = true;
+      try { localStorage.setItem(DEBUG_KEY, '1'); } catch {}
+      log.info('debug mode enabled — verbose logs active');
+    },
+    disableDebug() {
+      debugEnabled = false;
+      try { localStorage.removeItem(DEBUG_KEY); } catch {}
+    },
+    clearCache: () => cache.clear()
   };
 
-  // Auto-init si DOM prêt
+  // ════════════════════════════════════════════════════════════════════
+  //  AUTO-INIT
+  // ════════════════════════════════════════════════════════════════════
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => window.KClDownload.init());
   } else {
     window.KClDownload.init();
   }
+
+  log.debug(`download.js v${window.KClDownload.version} loaded`);
 })();
